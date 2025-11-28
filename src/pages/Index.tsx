@@ -7,9 +7,11 @@ import UpcomingPost from "@/components/UpcomingPost";
 import QuickAction from "@/components/QuickAction";
 import InsightCard from "@/components/InsightCard";
 import { Button } from "@/components/ui/button";
+import { useDemoMode } from "@/contexts/DemoModeContext";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { isDemoMode, triggerUpgrade } = useDemoMode();
   const metrics = [
     { title: "활성 캠페인", value: "3", change: "지난주 대비 +2", icon: Activity, color: "text-primary" },
     { title: "예약된 게시물", value: "5", change: "다음: 오늘 14:00", icon: Calendar, color: "text-secondary" },
@@ -90,6 +92,14 @@ const Index = () => {
     },
   ];
 
+  const handleNewContent = () => {
+    if (isDemoMode) {
+      triggerUpgrade('콘텐츠 생성');
+    } else {
+      navigate("/content/create");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
       {/* Floating Orbs */}
@@ -103,7 +113,7 @@ const Index = () => {
         {/* Header */}
         <div className="flex justify-end mb-8 animate-fade-in">
           <Button
-            onClick={() => navigate("/content/create")}
+            onClick={handleNewContent}
             className="bg-gradient-to-r from-primary to-secondary hover:opacity-90 text-white shadow-lg"
           >
             <Plus className="w-4 h-4 mr-2" />

@@ -1,5 +1,6 @@
 import { LayoutDashboard, FileText, Megaphone, Network, BarChart3, Settings, Coins, Lightbulb } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
+import { Link } from "react-router-dom";
 
 const Navigation = () => {
   const menuItems = [
@@ -13,17 +14,17 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="glass border-b border-border/40 sticky top-0 z-50">
+    <nav className="glass border-b border-border/40 sticky top-0 z-40">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <img
               src="/logo.svg"
               alt="Aberry"
               className="h-8 transition-all duration-300 drop-shadow-[0_0_8px_rgba(155,59,229,0.4)] hover:drop-shadow-[0_0_16px_rgba(155,59,229,0.6)]"
             />
-          </div>
+          </Link>
 
           {/* Menu Items */}
           <div className="hidden md:flex items-center gap-2">

@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 5072",
+    "dev": "vite --port 5072",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
