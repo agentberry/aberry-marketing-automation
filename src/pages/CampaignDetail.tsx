@@ -1,14 +1,14 @@
 import { useState } from "react";
-import { ArrowLeft, Calendar, DollarSign, TrendingUp, Users, Eye, MousePointerClick, Heart, MessageCircle, Play, Pause } from "lucide-react";
+import { ArrowLeft, Calendar, DollarSign, TrendingUp, Users, Eye, MousePointerClick, Heart, Sparkles, Trophy, Medal, Award, ChevronRight } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import Navigation from "@/components/Navigation";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import TrendChart from "@/components/TrendChart";
 import { useContent } from "@/contexts/ContentContext";
+import { useToast } from "@/hooks/use-toast";
 
 interface Campaign {
   id: string;
@@ -43,9 +43,10 @@ const CampaignDetail = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { contents } = useContent();
+  const { toast } = useToast();
 
   // Mock data
-  const [campaign] = useState<Campaign>({
+  const [campaign, setCampaign] = useState<Campaign>({
     id: id || "1",
     name: "여름 세일 캠페인",
     description: "6월 여름 시즌 특별 할인 프로모션을 위한 통합 마케팅 캠페인입니다. Instagram, Facebook, Twitter를 통해 타겟 고객에게 도달하고 브랜드 인지도를 높이는 것을 목표로 합니다.",
@@ -86,18 +87,55 @@ const CampaignDetail = () => {
     );
   };
 
+  const toggleCampaignActive = () => {
+    const newStatus = campaign.status === "활성" ? "일시정지" : "활성";
+    setCampaign((prev) => ({ ...prev, status: newStatus }));
+    toast({
+      title: newStatus === "활성" ? "캠페인이 활성화되었습니다" : "캠페인이 일시정지되었습니다",
+      description: newStatus === "활성"
+        ? "콘텐츠가 게시되고 광고가 집행됩니다."
+        : "모든 광고 집행이 일시 중단됩니다.",
+    });
+  };
+
   const performanceMetrics = [
     { title: "총 노출", value: "245,823", icon: Eye, color: "text-primary" },
     { title: "클릭", value: "12,456", icon: MousePointerClick, color: "text-secondary" },
-    { title: "참여율", value: "5.07%", icon: Heart, color: "text-accent" },
-    { title: "전환", value: "1,234", icon: Users, color: "text-purple-400" },
+    { title: "전환", value: "1,234", icon: Users, color: "text-accent" },
+    { title: "ROI", value: "+156%", icon: TrendingUp, color: "text-green-400" },
   ];
 
-  const channelPerformance = [
-    { channel: "Instagram", views: 120000, clicks: 6000, engagement: "5.0%" },
-    { channel: "Facebook", views: 85000, clicks: 4200, engagement: "4.9%" },
-    { channel: "Twitter", views: 40823, clicks: 2256, engagement: "5.5%" },
-  ];
+  // AI 인사이트 데이터
+  const aiInsights = {
+    topPerformingContent: "여름 세일 Instagram 포스트",
+    topPerformingReason: "밝은 색상과 한정 시간 메시지가 클릭률을 42% 높였습니다",
+    recommendations: [
+      "오후 6-8시에 게시하면 참여율이 23% 더 높아집니다",
+      "비디오 콘텐츠 추가 시 전환율 35% 상승 예상",
+      "현재 예산 대비 성과가 좋아 예산 증액을 권장합니다",
+    ],
+    weeklyTrend: "상승",
+    weeklyChange: "+18%",
+  };
+
+  // 콘텐츠를 ROI 기준으로 정렬 (랭킹)
+  const sortedContentPerformances = [...contentPerformances].sort((a, b) => {
+    const roiA = ((a.conversions * 50000 - a.spend) / a.spend) * 100;
+    const roiB = ((b.conversions * 50000 - b.spend) / b.spend) * 100;
+    return roiB - roiA;
+  });
+
+  const getRankIcon = (rank: number) => {
+    if (rank === 0) return <Trophy className="w-5 h-5 text-yellow-400" />;
+    if (rank === 1) return <Medal className="w-5 h-5 text-gray-400" />;
+    return <Award className="w-5 h-5 text-amber-600" />;
+  };
+
+  const getRankBadge = (rank: number) => {
+    if (rank === 0) return "bg-yellow-500/20 text-yellow-400 border-yellow-500/30";
+    if (rank === 1) return "bg-gray-500/20 text-gray-400 border-gray-500/30";
+    return "bg-amber-500/20 text-amber-600 border-amber-500/30";
+  };
 
   const budgetUsed = 3200000;
   const budgetProgress = (budgetUsed / campaign.budget) * 100;
@@ -127,9 +165,9 @@ const CampaignDetail = () => {
       <Navigation />
 
       <main className="container mx-auto px-4 py-8 relative z-10">
-        {/* Header */}
+        {/* Header with Campaign Toggle */}
         <div className="mb-8 animate-fade-in">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-4 mb-4">
             <button
               onClick={() => navigate("/campaigns")}
               className="glass border-border/40 hover:border-primary/40 rounded-lg p-2 transition-all"
@@ -137,29 +175,103 @@ const CampaignDetail = () => {
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex-1">
-              <h1 className="text-4xl font-bold mb-2">{campaign.name}</h1>
-              <p className="text-muted-foreground">{campaign.description}</p>
+              <div className="flex items-center gap-4 mb-2">
+                <h1 className="text-3xl font-bold">{campaign.name}</h1>
+                <div className={`px-3 py-1 rounded-full text-xs font-medium border ${statusColors[campaign.status]}`}>
+                  {campaign.status}
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground line-clamp-1">{campaign.description}</p>
             </div>
-            <div className={`px-4 py-2 rounded-full text-sm font-medium border ${statusColors[campaign.status]}`}>
-              {campaign.status}
+            {/* Campaign Active Toggle */}
+            <div className="glass border border-border/40 rounded-xl px-4 py-3 flex items-center gap-3">
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">캠페인 상태</span>
+                <span className="text-xs text-muted-foreground">
+                  {campaign.status === "활성" ? "광고 집행 중" : "집행 중지됨"}
+                </span>
+              </div>
+              <Switch
+                checked={campaign.status === "활성"}
+                onCheckedChange={toggleCampaignActive}
+                className="data-[state=checked]:bg-green-500"
+              />
             </div>
           </div>
         </div>
 
         {/* Performance Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-scale-in" style={{ animationDelay: "0.1s" }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6 animate-scale-in" style={{ animationDelay: "0.1s" }}>
           {performanceMetrics.map((metric, index) => (
-            <Card key={index} className="glass border-border/40 p-6">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-sm text-muted-foreground">{metric.title}</span>
-                <metric.icon className={`w-5 h-5 ${metric.color}`} />
+            <Card key={index} className="glass border-border/40 p-5">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">{metric.title}</span>
+                <metric.icon className={`w-4 h-4 ${metric.color}`} />
               </div>
-              <p className="text-3xl font-bold">{metric.value}</p>
+              <p className="text-2xl font-bold">{metric.value}</p>
             </Card>
           ))}
         </div>
 
-        {/* Budget & Timeline */}
+        {/* AI Insights Card - Most Important Section */}
+        <Card className="glass border-primary/40 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5 p-6 mb-6 animate-scale-in" style={{ animationDelay: "0.15s" }}>
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-bold text-lg flex items-center gap-2">
+                    AI 마케팅 인사이트
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary font-medium">
+                      주간 분석
+                    </span>
+                  </h3>
+                  <p className="text-sm text-muted-foreground">AI가 분석한 캠페인 성과 및 최적화 제안</p>
+                </div>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${
+                  aiInsights.weeklyTrend === "상승"
+                    ? "bg-green-500/20 text-green-400 border border-green-500/30"
+                    : "bg-red-500/20 text-red-400 border border-red-500/30"
+                }`}>
+                  <TrendingUp className="w-4 h-4" />
+                  {aiInsights.weeklyChange} 이번주
+                </div>
+              </div>
+
+              {/* Top Performing Content */}
+              <div className="glass border border-border/40 rounded-lg p-4 mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Trophy className="w-4 h-4 text-yellow-400" />
+                  <span className="text-sm font-medium">최고 성과 콘텐츠</span>
+                </div>
+                <p className="font-bold text-primary mb-1">{aiInsights.topPerformingContent}</p>
+                <p className="text-sm text-muted-foreground">{aiInsights.topPerformingReason}</p>
+              </div>
+
+              {/* Recommendations */}
+              <div>
+                <p className="text-sm font-medium mb-3 flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-secondary" />
+                  AI 추천 액션
+                </p>
+                <div className="space-y-2">
+                  {aiInsights.recommendations.map((rec, index) => (
+                    <div key={index} className="flex items-start gap-3 text-sm">
+                      <div className="w-5 h-5 rounded-full bg-secondary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-xs font-bold text-secondary">{index + 1}</span>
+                      </div>
+                      <p className="text-muted-foreground">{rec}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Budget & Timeline - Compact */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <Card className="glass border-border/40 p-6 animate-scale-in" style={{ animationDelay: "0.2s" }}>
             <div className="flex items-center gap-3 mb-4">
@@ -210,148 +322,127 @@ const CampaignDetail = () => {
           <TrendChart data={trendData} />
         </Card>
 
-        {/* Content Performance Comparison */}
-        <Card className="glass border-border/40 p-6 mb-8 animate-scale-in" style={{ animationDelay: "0.35s" }}>
+        {/* Content Performance Ranking */}
+        <Card className="glass border-border/40 p-6 mb-6 animate-scale-in" style={{ animationDelay: "0.32s" }}>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-500/10 flex items-center justify-center">
-              <MessageCircle className="w-5 h-5 text-purple-400" />
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-500/20 to-yellow-500/10 flex items-center justify-center">
+              <Trophy className="w-5 h-5 text-yellow-400" />
             </div>
             <div>
-              <h3 className="font-semibold text-lg">콘텐츠별 성과 비교</h3>
-              <p className="text-sm text-muted-foreground">A/B 테스트 결과 및 개별 콘텐츠 관리</p>
+              <h3 className="font-semibold text-lg">콘텐츠 성과 랭킹</h3>
+              <p className="text-sm text-muted-foreground">ROI 기준 효과적인 콘텐츠 순위</p>
             </div>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {contentPerformances.map((perf) => {
+
+          <div className="space-y-3">
+            {sortedContentPerformances.map((perf, index) => {
               const content = contents.find((c) => c.id === perf.contentId);
               if (!content) return null;
 
               const roi = ((perf.conversions * 50000 - perf.spend) / perf.spend) * 100;
+              const ctr = ((perf.clicks / perf.views) * 100).toFixed(2);
+              const conversionRate = ((perf.conversions / perf.clicks) * 100).toFixed(2);
 
               return (
                 <div
                   key={perf.contentId}
                   onClick={() => navigate(`/content/${perf.contentId}`)}
-                  className={`glass border rounded-xl overflow-hidden transition-all cursor-pointer ${
-                    perf.isActive ? "border-border/40 hover:border-primary/40" : "border-border/20 opacity-60"
+                  className={`glass border rounded-xl p-4 transition-all cursor-pointer group ${
+                    perf.isActive
+                      ? index === 0
+                        ? "border-yellow-500/40 bg-yellow-500/5 hover:border-yellow-500/60"
+                        : "border-border/40 hover:border-primary/40"
+                      : "border-border/20 opacity-60"
                   }`}
                 >
-                  {/* Header with Thumbnail and Status */}
-                  <div className="relative h-32 bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center">
-                    <div className="text-6xl">{content.thumbnail}</div>
-                    <div className="absolute top-3 right-3 flex items-center gap-2">
-                      <div className={`px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-xl ${
-                        roi > 100 ? "bg-green-500/20 text-green-400 border border-green-500/30" :
-                        roi > 0 ? "bg-yellow-500/20 text-yellow-400 border border-yellow-500/30" :
-                        "bg-red-500/20 text-red-400 border border-red-500/30"
-                      }`}>
-                        ROI {roi > 0 ? "+" : ""}{roi.toFixed(0)}%
+                  <div className="flex items-center gap-4">
+                    {/* Rank Badge */}
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${getRankBadge(index)}`}>
+                      {getRankIcon(index)}
+                    </div>
+
+                    {/* Thumbnail */}
+                    <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/10 via-secondary/10 to-accent/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-3xl">{content.thumbnail}</span>
+                    </div>
+
+                    {/* Content Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-bold truncate">{content.title}</h4>
+                        <div
+                          className="flex items-center gap-1.5"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Switch
+                            id={`active-${perf.contentId}`}
+                            checked={perf.isActive}
+                            onCheckedChange={() => toggleContentActive(perf.contentId)}
+                            className="scale-75"
+                          />
+                          <Label htmlFor={`active-${perf.contentId}`} className="text-xs text-muted-foreground cursor-pointer">
+                            {perf.isActive ? "활성" : "정지"}
+                          </Label>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground truncate">{content.description}</p>
+                    </div>
+
+                    {/* Performance Metrics */}
+                    <div className="hidden md:flex items-center gap-6">
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-0.5">노출</p>
+                        <p className="font-bold">{(perf.views / 1000).toFixed(0)}K</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-0.5">CTR</p>
+                        <p className="font-bold">{ctr}%</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-0.5">전환율</p>
+                        <p className="font-bold">{conversionRate}%</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-xs text-muted-foreground mb-0.5">지출</p>
+                        <p className="font-bold">₩{(perf.spend / 10000).toFixed(0)}만</p>
                       </div>
                     </div>
-                    <div className="absolute top-3 left-3">
-                      <div 
-                        className="flex items-center gap-2 backdrop-blur-xl bg-background/20 rounded-full px-3 py-1.5 border border-border/40"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Label htmlFor={`active-${perf.contentId}`} className="text-xs cursor-pointer font-medium">
-                          {perf.isActive ? "활성" : "정지"}
-                        </Label>
-                        <Switch
-                          id={`active-${perf.contentId}`}
-                          checked={perf.isActive}
-                          onCheckedChange={() => toggleContentActive(perf.contentId)}
-                        />
-                      </div>
+
+                    {/* ROI Badge */}
+                    <div className={`px-3 py-1.5 rounded-full text-sm font-bold border ${
+                      roi > 100 ? "bg-green-500/20 text-green-400 border-green-500/30" :
+                      roi > 0 ? "bg-yellow-500/20 text-yellow-400 border-yellow-500/30" :
+                      "bg-red-500/20 text-red-400 border border-red-500/30"
+                    }`}>
+                      ROI {roi > 0 ? "+" : ""}{roi.toFixed(0)}%
                     </div>
+
+                    {/* Arrow */}
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
 
-                  {/* Content Info */}
-                  <div className="p-5">
-                    <h4 className="font-bold text-lg mb-2">{content.title}</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{content.description}</p>
-
-                    {/* Performance Metrics Grid */}
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="glass border border-border/40 rounded-lg p-3 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Eye className="w-3.5 h-3.5 text-primary" />
-                          <p className="text-xs text-muted-foreground">노출</p>
-                        </div>
-                        <p className="text-xl font-bold">{perf.views.toLocaleString()}</p>
-                      </div>
-                      <div className="glass border border-border/40 rounded-lg p-3 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <MousePointerClick className="w-3.5 h-3.5 text-secondary" />
-                          <p className="text-xs text-muted-foreground">클릭</p>
-                        </div>
-                        <p className="text-xl font-bold">{perf.clicks.toLocaleString()}</p>
-                      </div>
-                      <div className="glass border border-border/40 rounded-lg p-3 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Users className="w-3.5 h-3.5 text-accent" />
-                          <p className="text-xs text-muted-foreground">전환</p>
-                        </div>
-                        <p className="text-xl font-bold">{perf.conversions.toLocaleString()}</p>
-                      </div>
-                      <div className="glass border border-border/40 rounded-lg p-3 text-center">
-                        <div className="flex items-center justify-center gap-1 mb-1">
-                          <Heart className="w-3.5 h-3.5 text-purple-400" />
-                          <p className="text-xs text-muted-foreground">참여율</p>
-                        </div>
-                        <p className="text-xl font-bold">{perf.engagement.toFixed(1)}%</p>
-                      </div>
+                  {/* Mobile Metrics */}
+                  <div className="md:hidden grid grid-cols-4 gap-2 mt-3 pt-3 border-t border-border/40">
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">노출</p>
+                      <p className="text-sm font-bold">{(perf.views / 1000).toFixed(0)}K</p>
                     </div>
-
-                    {/* Spend */}
-                    <div className="glass border border-primary/40 bg-primary/5 rounded-lg p-3 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium">총 지출</span>
-                      </div>
-                      <span className="text-lg font-bold text-primary">₩{(perf.spend / 10000).toFixed(0)}만</span>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">CTR</p>
+                      <p className="text-sm font-bold">{ctr}%</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">전환율</p>
+                      <p className="text-sm font-bold">{conversionRate}%</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-[10px] text-muted-foreground">지출</p>
+                      <p className="text-sm font-bold">₩{(perf.spend / 10000).toFixed(0)}만</p>
                     </div>
                   </div>
                 </div>
               );
             })}
-          </div>
-        </Card>
-
-        {/* Channel Performance */}
-        <Card className="glass border-border/40 p-6 animate-scale-in" style={{ animationDelay: "0.4s" }}>
-          <div className="flex items-center gap-3 mb-6">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
-              <TrendingUp className="w-5 h-5 text-accent" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-lg">채널별 성과</h3>
-              <p className="text-sm text-muted-foreground">각 채널의 상세 통계</p>
-            </div>
-          </div>
-          <div className="space-y-4">
-            {channelPerformance.map((channel, index) => (
-              <div
-                key={index}
-                className="glass border border-border/40 rounded-lg p-4 hover:border-primary/40 transition-all"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <h4 className="font-semibold">{channel.channel}</h4>
-                  <div className="px-3 py-1 rounded-full text-xs font-medium bg-accent/10 text-accent border border-accent/20">
-                    {channel.engagement} 참여율
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">노출</p>
-                    <p className="text-lg font-bold">{channel.views.toLocaleString()}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">클릭</p>
-                    <p className="text-lg font-bold">{channel.clicks.toLocaleString()}</p>
-                  </div>
-                </div>
-              </div>
-            ))}
           </div>
         </Card>
       </main>

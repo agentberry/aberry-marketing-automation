@@ -46,6 +46,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
         engagement: 5.8,
       },
       generatedContent: "🎉 드디어 공개합니다! 🎉\n\n여러분이 기다려주신 신제품이 드디어 출시되었습니다! 💫\n\n✨ 혁신적인 디자인\n🚀 뛰어난 성능\n💎 합리적인 가격\n\n지금 바로 만나보세요!\n\n👉 프로필 링크에서 자세한 정보 확인\n\n#신제품 #런칭 #NewArrival #혁신 #프리미엄",
+      mediaUrl: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&h=800&fit=crop",
     },
     {
       id: "2",
@@ -97,6 +98,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
         engagement: 6.4,
       },
       generatedContent: "브랜드를 혁신하다\n\n당신의 비즈니스를 다음 단계로.\n\n✓ 업계 1위 품질\n✓ 검증된 성능\n✓ 고객 만족도 99%\n\n지금 무료 체험 시작하기\n[체험 신청]",
+      mediaUrl: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200&h=628&fit=crop",
     },
     {
       id: "5",
@@ -114,6 +116,7 @@ export const ContentProvider = ({ children }: { children: ReactNode }) => {
         engagement: 0,
       },
       generatedContent: "[영상 스크립트]\n\n00:00 - 인트로\n\"혁신적인 제품을 소개합니다\"\n\n00:05 - 주요 기능 1\n\"뛰어난 성능과 효율성\"\n\n00:10 - 주요 기능 2\n\"직관적인 사용자 경험\"\n\n00:15 - 주요 기능 3\n\"합리적인 가격대\"\n\n00:20 - 클로징\n\"지금 바로 만나보세요\"",
+      mediaUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
     },
     {
       id: "6",

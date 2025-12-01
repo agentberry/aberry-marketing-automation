@@ -10,8 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { User, Bell, Key, Coins, Globe, Palette, Shield, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import ApiKeyDialog from "@/components/ApiKeyDialog";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Settings = () => {
+  const { theme, setTheme } = useTheme();
   const [showApiKeyDialog, setShowApiKeyDialog] = useState(false);
   const [profileData, setProfileData] = useState({
     name: "사용자",
@@ -238,14 +240,24 @@ const Settings = () => {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="theme">테마</Label>
-                <Select defaultValue="dark">
+                <Select
+                  value={theme}
+                  onValueChange={(value: "dark" | "light" | "system") => {
+                    setTheme(value);
+                    toast.success(
+                      value === "dark" ? "다크 모드로 변경되었습니다" :
+                      value === "light" ? "라이트 모드로 변경되었습니다" :
+                      "시스템 설정을 따릅니다"
+                    );
+                  }}
+                >
                   <SelectTrigger id="theme" className="glass">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="dark">다크 모드</SelectItem>
                     <SelectItem value="light">라이트 모드</SelectItem>
-                    <SelectItem value="auto">시스템 설정</SelectItem>
+                    <SelectItem value="system">시스템 설정</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
