@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { User, Bell, Key, Coins, Globe, Palette, Shield, Trash2 } from "lucide-react";
+import { User, Bell, Key, Coins, Globe, Palette, Shield, Trash2, Sun, Moon, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import ApiKeyDialog from "@/components/ApiKeyDialog";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "next-themes";
 
 const Settings = () => {
   const { theme, setTheme } = useTheme();
@@ -239,27 +239,54 @@ const Settings = () => {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="theme">테마</Label>
-                <Select
-                  value={theme}
-                  onValueChange={(value: "dark" | "light" | "system") => {
-                    setTheme(value);
-                    toast.success(
-                      value === "dark" ? "다크 모드로 변경되었습니다" :
-                      value === "light" ? "라이트 모드로 변경되었습니다" :
-                      "시스템 설정을 따릅니다"
-                    );
-                  }}
-                >
-                  <SelectTrigger id="theme" className="glass">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dark">다크 모드</SelectItem>
-                    <SelectItem value="light">라이트 모드</SelectItem>
-                    <SelectItem value="system">시스템 설정</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>테마</Label>
+                <div className="grid grid-cols-3 gap-3">
+                  <button
+                    onClick={() => {
+                      setTheme("light");
+                      toast.success("라이트 모드로 변경되었습니다");
+                    }}
+                    className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                      theme === "light"
+                        ? "border-primary bg-primary/10 scale-105"
+                        : "border-border/40 hover:border-primary/40"
+                    }`}
+                  >
+                    <Sun className="w-8 h-8" />
+                    <p className="text-sm font-medium">라이트 모드</p>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTheme("dark");
+                      toast.success("다크 모드로 변경되었습니다");
+                    }}
+                    className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                      theme === "dark"
+                        ? "border-primary bg-primary/10 scale-105"
+                        : "border-border/40 hover:border-primary/40"
+                    }`}
+                  >
+                    <Moon className="w-8 h-8" />
+                    <p className="text-sm font-medium">다크 모드</p>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setTheme("system");
+                      toast.success("시스템 설정을 따릅니다");
+                    }}
+                    className={`p-4 rounded-lg border-2 transition-all flex flex-col items-center gap-2 ${
+                      theme === "system"
+                        ? "border-primary bg-primary/10 scale-105"
+                        : "border-border/40 hover:border-primary/40"
+                    }`}
+                  >
+                    <Monitor className="w-8 h-8" />
+                    <p className="text-sm font-medium">시스템 설정</p>
+                  </button>
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  화면 테마를 선택하세요. 시스템 설정을 선택하면 운영체제의 테마 설정을 따릅니다.
+                </p>
               </div>
             </CardContent>
           </Card>

@@ -7,8 +7,52 @@ All colors MUST be HSL.
 */
 
 @layer base {
-  /* 다크 모드 (기본값) */
-  :root,
+  /* 라이트 모드 (기본값) */
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 47.4% 11.2%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 47.4% 11.2%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 47.4% 11.2%;
+
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 258 90% 66%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+
+    --accent: 189 94% 43%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 239 84% 67%;
+
+    --radius: 0.75rem;
+
+    /* Gradients - 라이트 모드 */
+    --gradient-primary: linear-gradient(135deg, hsl(243 75% 59%) 0%, hsl(258 84% 47%) 100%);
+    --gradient-glow: linear-gradient(135deg, hsl(189 94% 43%) 0%, hsl(239 84% 67%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100% / 0.8) 0%, hsl(210 40% 98% / 0.6) 100%);
+
+    /* Shadows - 라이트 모드 */
+    --shadow-glow: 0 20px 40px hsl(239 84% 67% / 0.1);
+    --shadow-accent: 0 10px 30px hsl(239 84% 67% / 0.15);
+
+    /* Blur */
+    --blur-glass: blur(20px);
+  }
+
+  /* 다크 모드 */
   .dark {
     --background: 240 10% 6%;
     --foreground: 0 0% 98%;
@@ -38,8 +82,6 @@ All colors MUST be HSL.
     --input: 240 6% 18%;
     --ring: 239 84% 67%;
 
-    --radius: 0.75rem;
-
     /* Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(243 75% 59%) 0%, hsl(258 84% 47%) 100%);
     --gradient-glow: linear-gradient(135deg, hsl(189 94% 43%) 0%, hsl(239 84% 67%) 100%);
@@ -53,7 +95,7 @@ All colors MUST be HSL.
     --blur-glass: blur(20px);
   }
 
-  /* 라이트 모드 */
+  /* 라이트 모드 (레거시 지원) */
   .light {
     --background: 0 0% 100%;
     --foreground: 222.2 47.4% 11.2%;

@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ContentProvider } from "@/contexts/ContentContext";
 import { DemoModeProvider } from "@/contexts/DemoModeContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { ThemeProvider } from "next-themes";
 import DemoBanner from "@/components/DemoBanner";
 import UpgradeModal from "@/components/UpgradeModal";
 import Index from "./pages/Index";
@@ -26,7 +26,7 @@ const queryClient = new QueryClient();
 // Force refresh to load ContentProvider
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <TooltipProvider>
         <DemoModeProvider>
           <ContentProvider>
