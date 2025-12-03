@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ArrowLeft, AlertCircle, Cloud, Copy, Zap, PenTool, Globe, MessageCircle, Plus, Search, CheckCircle2, XCircle, Loader2, HelpCircle, ExternalLink, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Instagram, Facebook, Twitter, Linkedin, Youtube } from "lucide-react";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { useIntegrations, type IntegrationProvider, type IntegrationType } from "@/hooks/use-integrations";
 
 interface Channel {
   id: string;
@@ -27,6 +28,8 @@ interface Channel {
   isCustom?: boolean;
   apiStatus?: "checking" | "supported" | "limited" | "unsupported";
   integrationMethod?: string;
+  provider?: IntegrationProvider;
+  integrationType?: IntegrationType;
 }
 
 // 알려진 플랫폼 API 지원 정보 데이터베이스
@@ -36,6 +39,8 @@ const knownPlatformInfo: Record<string, {
   note: string;
   category: "social" | "blog" | "copy-only";
   color: string;
+  provider?: IntegrationProvider;
+  integrationType?: IntegrationType;
 }> = {
   pinterest: {
     apiSupport: "supported",
@@ -175,6 +180,7 @@ const knownPlatformInfo: Record<string, {
 const Channels = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { integrations, loading, connect, disconnect, isConnected } = useIntegrations();
 
   // 커스텀 채널 추가 모달 상태
   const [addChannelOpen, setAddChannelOpen] = useState(false);
@@ -187,6 +193,8 @@ const Channels = () => {
     note: string;
     category: "social" | "blog" | "copy-only";
     color: string;
+    provider?: IntegrationProvider;
+    integrationType?: IntegrationType;
   } | null>(null);
 
   const [channels, setChannels] = useState<Channel[]>([
@@ -199,6 +207,8 @@ const Channels = () => {
       isConnected: false,
       requiresApiKey: false,
       category: "social",
+      provider: "LINKEDIN",
+      integrationType: "OAUTH",
     },
     {
       id: "wordpress",
@@ -208,6 +218,8 @@ const Channels = () => {
       isConnected: false,
       requiresApiKey: true,
       category: "blog",
+      provider: "WORDPRESS",
+      integrationType: "API_KEY",
     },
     {
       id: "medium",
@@ -218,6 +230,8 @@ const Channels = () => {
       requiresApiKey: true,
       category: "blog",
       note: "API 유지보수 모드",
+      provider: "MEDIUM",
+      integrationType: "API_KEY",
     },
     // Phase 2: Meta 앱 검토 필요
     {
@@ -225,26 +239,24 @@ const Channels = () => {
       name: "Instagram",
       icon: Instagram,
       color: "text-pink-500",
-      isConnected: true,
+      isConnected: false,
       requiresApiKey: false,
-      followers: 15420,
-      posts: 248,
-      engagement: "4.2%",
       category: "social",
       note: "Meta 앱 검토 필요",
+      provider: "INSTAGRAM",
+      integrationType: "OAUTH",
     },
     {
       id: "facebook",
       name: "Facebook",
       icon: Facebook,
       color: "text-blue-600",
-      isConnected: true,
+      isConnected: false,
       requiresApiKey: false,
-      followers: 8930,
-      posts: 186,
-      engagement: "3.8%",
       category: "social",
       note: "Meta 앱 검토 필요",
+      provider: "FACEBOOK",
+      integrationType: "OAUTH",
     },
     {
       id: "threads",
@@ -255,6 +267,8 @@ const Channels = () => {
       requiresApiKey: false,
       category: "social",
       note: "Meta 앱 검토 필요",
+      provider: "THREADS",
+      integrationType: "OAUTH",
     },
     // Phase 3: TikTok, YouTube
     {
@@ -266,6 +280,8 @@ const Channels = () => {
       requiresApiKey: false,
       category: "social",
       note: "앱 감사 전 비공개 모드",
+      provider: "TIKTOK",
+      integrationType: "OAUTH",
     },
     {
       id: "youtube",
@@ -276,6 +292,8 @@ const Channels = () => {
       requiresApiKey: false,
       category: "social",
       note: "분석만 지원",
+      provider: "YOUTUBE",
+      integrationType: "OAUTH",
     },
     // Phase 4: 복사+직접 게시만
     {
@@ -287,6 +305,8 @@ const Channels = () => {
       requiresApiKey: false,
       category: "copy-only",
       note: "API 유료화 - 복사+직접 게시",
+      provider: "TWITTER",
+      integrationType: "OAUTH",
     },
     {
       id: "tistory",
@@ -297,6 +317,8 @@ const Channels = () => {
       requiresApiKey: false,
       category: "copy-only",
       note: "API 종료 - 복사+직접 게시",
+      provider: "TISTORY",
+      integrationType: "API_KEY",
     },
     {
       id: "naver",
@@ -307,107 +329,76 @@ const Channels = () => {
       requiresApiKey: false,
       category: "copy-only",
       note: "정책 위반 - 복사+직접 게시",
+      provider: "NAVER_BLOG",
+      integrationType: "API_KEY",
     },
   ]);
 
+  // Update channel connection status based on integrations
+  const channelsWithStatus = useMemo(() => {
+    return channels.map((channel) => ({
+      ...channel,
+      isConnected: channel.provider ? isConnected(channel.provider) : channel.isConnected,
+    }));
+  }, [channels, integrations, isConnected]);
 
-  // Load connection status from localStorage
-  useEffect(() => {
-    const savedConnections = localStorage.getItem("channelConnections");
-    if (savedConnections) {
-      try {
-        const connections = JSON.parse(savedConnections);
-        setChannels((prev) =>
-          prev.map((channel) => ({
-            ...channel,
-            isConnected: connections[channel.id] || channel.isConnected,
-          }))
-        );
-      } catch (error) {
-        console.error("Failed to load channel connections:", error);
-      }
-    }
-  }, []);
+  const handleConnect = async (id: string) => {
+    const channel = channelsWithStatus.find((c) => c.id === id);
+    if (!channel) return;
 
-  const saveConnections = (updatedChannels: Channel[]) => {
-    const connections = updatedChannels.reduce((acc, channel) => {
-      acc[channel.id] = channel.isConnected;
-      return acc;
-    }, {} as Record<string, boolean>);
-    localStorage.setItem("channelConnections", JSON.stringify(connections));
-  };
-
-  const handleConnect = (id: string) => {
-    const channel = channels.find((c) => c.id === id);
-    
-    // Simulate OAuth flow
-    toast({
-      title: "연결 중...",
-      description: `${channel?.name} OAuth 인증 창이 열립니다.`,
-    });
-
-    // Simulate successful connection after 1 second
-    setTimeout(() => {
-      const updatedChannels = channels.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              isConnected: true,
-              followers: Math.floor(Math.random() * 20000) + 5000,
-              posts: Math.floor(Math.random() * 300) + 50,
-              engagement: `${(Math.random() * 5 + 2).toFixed(1)}%`,
-            }
-          : c
-      );
-      setChannels(updatedChannels);
-      saveConnections(updatedChannels);
-
+    // 커스텀 채널이거나 provider가 없으면 copy-only
+    if (channel.isCustom || !channel.provider || !channel.integrationType) {
       toast({
-        title: "연결 완료",
-        description: `${channel?.name}이(가) 성공적으로 연결되었습니다.`,
+        title: "수동 게시만 지원",
+        description: "이 채널은 복사+직접 게시 방식만 지원합니다.",
+        variant: "destructive",
       });
-    }, 1000);
+      return;
+    }
+
+    try {
+      await connect({
+        provider: channel.provider,
+        type: channel.integrationType,
+        agentId: "marketing-automation",
+      });
+    } catch (error) {
+      console.error("Connection failed:", error);
+    }
   };
 
-  const handleDisconnect = (id: string) => {
-    const channel = channels.find((c) => c.id === id);
-    const updatedChannels = channels.map((c) =>
-      c.id === id
-        ? { ...c, isConnected: false, followers: undefined, posts: undefined, engagement: undefined }
-        : c
-    );
-    setChannels(updatedChannels);
-    saveConnections(updatedChannels);
+  const handleDisconnect = async (id: string) => {
+    const channel = channelsWithStatus.find((c) => c.id === id);
+    if (!channel || !channel.provider) return;
 
-    toast({
-      title: "연결 해제",
-      description: `${channel?.name} 연결이 해제되었습니다.`,
-    });
+    // Find the integration for this provider
+    const integration = integrations.find((i) => i.provider === channel.provider);
+    if (!integration) return;
+
+    try {
+      await disconnect(integration.id);
+    } catch (error) {
+      console.error("Disconnection failed:", error);
+    }
   };
 
-  const handleSaveApiKey = (id: string, apiKey: string) => {
-    // Save API key to localStorage (in production, this should be in Supabase secrets)
-    localStorage.setItem(`${id}_api_key`, apiKey);
+  const handleSaveApiKey = async (id: string, apiKey: string, additionalData?: Record<string, string>) => {
+    const channel = channelsWithStatus.find((c) => c.id === id);
+    if (!channel || !channel.provider) return;
 
-    const channel = channels.find((c) => c.id === id);
-    const updatedChannels = channels.map((c) =>
-      c.id === id
-        ? {
-            ...c,
-            isConnected: true,
-            followers: Math.floor(Math.random() * 10000) + 1000,
-            posts: Math.floor(Math.random() * 200) + 20,
-            engagement: `${(Math.random() * 10 + 5).toFixed(1)}%`,
-          }
-        : c
-    );
-    setChannels(updatedChannels);
-    saveConnections(updatedChannels);
-
-    toast({
-      title: "API 키 저장 완료",
-      description: `${channel?.name}이(가) 성공적으로 연결되었습니다.`,
-    });
+    try {
+      await connect({
+        provider: channel.provider,
+        type: "API_KEY",
+        credentials: {
+          apiKey,
+          ...additionalData,
+        },
+        agentId: "marketing-automation",
+      });
+    } catch (error) {
+      console.error("API key save failed:", error);
+    }
   };
 
   // 채널명으로 API 지원 여부 확인
@@ -434,6 +425,8 @@ const Channels = () => {
           note: info.note,
           category: info.category,
           color: info.color,
+          provider: info.provider,
+          integrationType: info.integrationType,
         });
       } else {
         // 알려지지 않은 플랫폼
@@ -466,6 +459,8 @@ const Channels = () => {
       isCustom: true,
       apiStatus: apiCheckResult.apiSupport === "unknown" ? "checking" : apiCheckResult.apiSupport,
       integrationMethod: apiCheckResult.integrationMethod,
+      provider: apiCheckResult.provider,
+      integrationType: apiCheckResult.integrationType,
     };
 
     setChannels([...channels, newChannel]);
@@ -521,17 +516,17 @@ const Channels = () => {
 
         {/* Security Alert */}
         <Alert className="glass border-border/40 mb-8 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-          <AlertCircle className="h-4 w-4" />
+          <CheckCircle2 className="h-4 w-4 text-green-500" />
           <AlertDescription>
             <div className="flex items-start justify-between gap-4">
               <div>
-                <strong className="block mb-1">보안 알림</strong>
+                <strong className="block mb-1">보안 연결</strong>
                 <span className="text-sm">
-                  현재 API 키는 브라우저에 임시 저장됩니다. 프로덕션 환경에서는 Lovable Cloud를 연결하여 
-                  Supabase Secrets에 안전하게 저장하는 것을 강력히 권장합니다.
+                  모든 API 키와 OAuth 토큰은 AES-256-GCM 암호화를 통해 서버에 안전하게 저장됩니다.
+                  프로덕션 환경에서는 AWS Secrets Manager를 사용하여 추가 보안 계층을 제공합니다.
                 </span>
               </div>
-              <Cloud className="w-5 h-5 text-primary flex-shrink-0 mt-1" />
+              <Cloud className="w-5 h-5 text-green-500 flex-shrink-0 mt-1" />
             </div>
           </AlertDescription>
         </Alert>
@@ -543,7 +538,7 @@ const Channels = () => {
           </h2>
           <p className="text-muted-foreground mb-6">OAuth 인증으로 자동 발행 가능</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {channels
+            {channelsWithStatus
               .filter((channel) => channel.category === "social")
               .map((channel, index) => (
                 <div key={channel.id} style={{ animationDelay: `${0.6 + index * 0.1}s` }}>
@@ -565,7 +560,7 @@ const Channels = () => {
           </h2>
           <p className="text-muted-foreground mb-6">API 키 또는 토큰으로 자동 발행</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {channels
+            {channelsWithStatus
               .filter((channel) => channel.category === "blog")
               .map((channel, index) => (
                 <div key={channel.id} style={{ animationDelay: `${1.0 + index * 0.1}s` }}>
@@ -596,7 +591,7 @@ const Channels = () => {
             </AlertDescription>
           </Alert>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {channels
+            {channelsWithStatus
               .filter((channel) => channel.category === "copy-only" && !channel.isCustom)
               .map((channel, index) => (
                 <div key={channel.id} style={{ animationDelay: `${1.4 + index * 0.1}s` }}>

@@ -20,6 +20,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { PricingSection } from '@/components/pricing/PricingSection';
+import { MiniContentGeneratorDemo } from '@/components/MiniContentGeneratorDemo';
 
 // 커스텀 TikTok 아이콘 (공식 로고 기반)
 const TikTokIcon = ({ className, style }: { className?: string; style?: React.CSSProperties }) => (
@@ -198,45 +199,10 @@ export default function MarketingAutomationPage() {
                       </div>
                     </div>
                   </div>
-                  {/* 대시보드 미리보기 */}
-                  <div className="p-6 space-y-4 bg-background">
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                        <div className="text-xs text-muted-foreground mb-1">활성 캠페인</div>
-                        <div className="text-2xl font-bold">12</div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                        <div className="text-xs text-muted-foreground mb-1">예약 게시물</div>
-                        <div className="text-2xl font-bold">47</div>
-                      </div>
-                      <div className="p-4 rounded-xl bg-muted/50 border border-border">
-                        <div className="text-xs text-muted-foreground mb-1">총 조회수</div>
-                        <div className="text-2xl font-bold">2.4K</div>
-                      </div>
-                    </div>
-                    <div className="h-36 rounded-xl bg-muted/30 border border-border p-4">
-                      <div className="flex items-end justify-between h-full gap-2">
-                        {[35, 55, 40, 70, 50, 85, 65, 90, 75, 60, 80, 95].map((h, i) => (
-                          <div
-                            key={i}
-                            className="flex-1 bg-primary/40 rounded-sm transition-all hover:bg-primary/60"
-                            style={{ height: `${h}%` }}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {channels.slice(0, 5).map((channel) => (
-                        <div
-                          key={channel.name}
-                          className="w-9 h-9 rounded-lg bg-muted/50 border border-border flex items-center justify-center"
-                        >
-                          <channel.icon className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                      ))}
-                      <div className="w-9 h-9 rounded-lg bg-muted/50 border border-border flex items-center justify-center text-xs text-muted-foreground font-medium">
-                        +5
-                      </div>
+                  {/* Interactive Demo Content */}
+                  <div className="h-[500px] overflow-y-auto bg-background">
+                    <div className="scale-[0.85] origin-top-left w-[117.65%] pb-8">
+                      <MiniContentGeneratorDemo />
                     </div>
                   </div>
                 </div>
